@@ -1184,22 +1184,28 @@ footer strong { color: var(--text); }
         <option>senior</option>
         <option>staff</option>
       </select>
-      <select id="filter-repo">
-        <option value="all">Todos os Repositórios</option>
-        <option value="checkout-api">checkout-api</option>
-        <option value="onboarding-web">onboarding-web</option>
-        <option value="platform-core">platform-core</option>
-        <option value="payments-service">payments-service</option>
-        <option value="data-pipeline">data-pipeline</option>
-      </select>
-      <select id="filter-feature">
-        <option value="all">Todos os Domínios</option>
-        <option value="checkout">Checkout</option>
-        <option value="onboarding">Onboarding</option>
-        <option value="platform">Plataforma</option>
-        <option value="payments">Pagamentos</option>
-        <option value="data">Dados &amp; ML</option>
-      </select>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <label for="filter-repo" style="font-size:11px;font-weight:500;color:var(--muted);">Repositório</label>
+        <select id="filter-repo">
+          <option value="all">Todos os Repositórios</option>
+          <option value="checkout-api">checkout-api</option>
+          <option value="onboarding-web">onboarding-web</option>
+          <option value="platform-core">platform-core</option>
+          <option value="payments-service">payments-service</option>
+          <option value="data-pipeline">data-pipeline</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <label for="filter-feature" style="font-size:11px;font-weight:500;color:var(--muted);">Feature / Domínio</label>
+        <select id="filter-feature">
+          <option value="all">Todos os Domínios</option>
+          <option value="checkout">Checkout</option>
+          <option value="onboarding">Onboarding</option>
+          <option value="platform">Plataforma</option>
+          <option value="payments">Pagamentos</option>
+          <option value="data">Dados &amp; ML</option>
+        </select>
+      </div>
     </div>
 
     <h3 style="margin-bottom:16px;">Top 10 PRs com Maior review_time — Gargalo Identificado</h3>
