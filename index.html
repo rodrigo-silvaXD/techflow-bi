@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TechFlow · Proposta Técnica de BI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* ── RESET & BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0F172A;
+  --card: #1E293B;
+  --border: #334155;
+  --blue: #0EA5E9;
+  --green: #10B981;
+  --red: #EF4444;
+  --yellow: #F59E0B;
+  --purple: #8B5CF6;
+  --cyan: #06B6D4;
+  --text: #F1F5F9;
+  --muted: #94A3B8;
+  --sidebar-w: 240px;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow-y: auto;
+}
+.sidebar-logo {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .brand { font-size: 20px; font-weight: 700; color: var(--blue); }
+.sidebar-logo .badge {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  background: rgba(14,165,233,0.15);
+  color: var(--blue);
+  border: 1px solid rgba(14,165,233,0.3);
+  border-radius: 20px;
+  padding: 2px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.sidebar-nav { flex: 1; padding: 16px 0; }
+.sidebar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-left: 3px solid transparent;
+}
+.sidebar-nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+.sidebar-nav a.active { color: var(--blue); border-left-color: var(--blue); background: rgba(14,165,233,0.08); }
+.sidebar-nav .num { font-size: 11px; color: var(--muted); opacity: 0.6; min-width: 20px; }
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ── HAMBURGER ── */
+.hamburger {
+  display: none;
+  position: fixed;
+  top: 16px; left: 16px;
+  z-index: 200;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+}
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 99;
+}
+
+/* ── MAIN CONTENT ── */
+main {
+  margin-left: var(--sidebar-w);
+  padding: 0;
+}
+section {
+  padding: 64px 48px;
+  border-bottom: 1px solid var(--border);
+}
+section:last-of-type { border-bottom: none; }
+
+/* ── TYPOGRAPHY ── */
+h1 { font-size: 40px; font-weight: 700; line-height: 1.2; }
+h2 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+h3 { font-size: 18px; font-weight: 600; }
+h4 { font-size: 15px; font-weight: 600; }
+.subtitle { color: var(--muted); font-size: 15px; margin-bottom: 32px; }
+.section-header { margin-bottom: 36px; }
+
+/* ── BADGES ── */
+.badge-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.badge-blue { background: rgba(14,165,233,0.15); color: var(--blue); border: 1px solid rgba(14,165,233,0.3); }
+.badge-green { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+.badge-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
+.badge-red { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+.badge-purple { background: rgba(139,92,246,0.15); color: var(--purple); border: 1px solid rgba(139,92,246,0.3); }
+.badge-cyan { background: rgba(6,182,212,0.15); color: var(--cyan); border: 1px solid rgba(6,182,212,0.3); }
+.badge-orange { background: rgba(249,115,22,0.15); color: #F97316; border: 1px solid rgba(249,115,22,0.3); }
+.badge-silver { background: rgba(148,163,184,0.15); color: #CBD5E1; border: 1px solid rgba(148,163,184,0.3); }
+.badge-gold { background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.4); }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+}
+.card-accent-left {
+  border-left: 4px solid var(--red);
+}
+.card-accent-top-yellow {
+  border-top: 3px solid var(--yellow);
+}
+.card-accent-top-blue {
+  border-top: 3px solid var(--blue);
+}
+
+/* ── KPI GRID ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 32px 0;
+}
+.kpi-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.kpi-red::before { background: var(--red); }
+.kpi-yellow::before { background: var(--yellow); }
+.kpi-green::before { background: var(--green); }
+.kpi-icon { font-size: 22px; margin-bottom: 10px; }
+.kpi-value { font-size: 32px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+.kpi-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.kpi-delta { font-size: 12px; font-weight: 600; }
+.kpi-red .kpi-value, .kpi-red .kpi-delta { color: var(--red); }
+.kpi-yellow .kpi-value, .kpi-yellow .kpi-delta { color: var(--yellow); }
+.kpi-green .kpi-value { color: var(--green); }
+.kpi-green .kpi-delta { color: var(--green); }
+
+/* ── GAUGE BAR ── */
+.gauge-bar-wrap { margin-top: 12px; }
+.gauge-bar-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+.gauge-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.gauge-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+
+/* ── BANNER ── */
+.banner-diagnostic {
+  background: var(--card);
+  border-top: 3px solid var(--yellow);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  margin-top: 32px;
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+/* ── SVG STAR SCHEMA ── */
+.star-schema-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+  overflow-x: auto;
+}
+.star-schema-wrap svg { display: block; margin: 0 auto; max-width: 100%; }
+
+/* ── ACCORDION ── */
+.accordion { margin-bottom: 10px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+.accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: pointer;
+  background: var(--card);
+  user-select: none;
+  transition: background 0.2s;
+}
+.accordion-header:hover { background: rgba(255,255,255,0.03); }
+.accordion-header-left { display: flex; align-items: center; gap: 12px; }
+.accordion-icon { font-size: 18px; }
+.accordion-arrow { transition: transform 0.3s; font-size: 12px; color: var(--muted); }
+.accordion.open .accordion-arrow { transform: rotate(180deg); }
+.accordion-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+}
+.accordion.open .accordion-body { max-height: 1000px; }
+.accordion-inner { padding: 0 20px 20px; background: var(--card); }
+
+/* ── TABLE ── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th {
+  background: rgba(255,255,255,0.05);
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+.data-table td { padding: 9px 12px; border-bottom: 1px solid rgba(51,65,85,0.5); vertical-align: top; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table td:first-child { font-family: monospace; font-size: 12px; color: var(--blue); }
+.data-table td:nth-child(2) { font-family: monospace; font-size: 12px; color: var(--green); }
+.data-table td:nth-child(3) { color: var(--muted); }
+.data-table .row-highlight-green { background: rgba(16,185,129,0.06); }
+.data-table .row-highlight-red { background: rgba(239,68,68,0.06); }
+.data-table .row-highlight-blue { background: rgba(14,165,233,0.06); }
+
+/* ── SQL BLOCK ── */
+.sql-card {
+  background: #0D1117;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 32px;
+}
+.sql-card-header {
+  background: var(--card);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.sql-card-header h4 { font-size: 14px; }
+.sql-note { font-size: 12px; color: var(--muted); padding: 12px 20px; border-top: 1px solid var(--border); background: var(--card); }
+pre.sql { padding: 20px; overflow-x: auto; font-size: 13px; line-height: 1.8; }
+.kw { color: #79C0FF; font-weight: 600; }
+.fn { color: #7EE787; }
+.tbl { color: #FFA657; }
+.str { color: #A5D6FF; }
+.cmt { color: #8B949E; font-style: italic; }
+
+/* ── PIPELINE FLOW ── */
+.pipeline-flow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 32px 0;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.pipeline-block {
+  flex: 1;
+  min-width: 150px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 16px;
+  text-align: center;
+  position: relative;
+}
+.pipeline-arrow {
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  color: var(--blue);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.pipeline-block .tool-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.tool-airbyte { background: #2563EB; color: #fff; }
+.tool-bq { background: #854D0E; color: #FEF3C7; }
+.tool-dbt { background: #EA580C; color: #fff; }
+.tool-bq-analytics { background: #065F46; color: #D1FAE5; }
+.pipeline-block h4 { font-size: 13px; margin-bottom: 6px; }
+.pipeline-block .pipe-sub { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.pipeline-block .pipe-detail { font-size: 10px; color: var(--blue); margin-top: 8px; font-weight: 500; }
+.sources-icons { display: flex; justify-content: center; gap: 12px; margin-bottom: 10px; }
+.src-icon { font-size: 24px; }
+
+/* Animated arrow */
+@keyframes flowPulse {
+  0% { opacity: 0.3; transform: translateX(-4px); }
+  50% { opacity: 1; transform: translateX(4px); }
+  100% { opacity: 0.3; transform: translateX(-4px); }
+}
+.pipeline-arrow span { display: inline-block; animation: flowPulse 1.6s ease-in-out infinite; }
+
+/* ── LAYER CARDS ── */
+.layer-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin: 32px 0; }
+.layer-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+.layer-card h4 { margin-bottom: 12px; }
+.layer-card ul { padding-left: 0; list-style: none; }
+.layer-card ul li { font-size: 13px; color: var(--muted); padding: 4px 0; border-bottom: 1px solid rgba(51,65,85,0.4); }
+.layer-card ul li:last-child { border-bottom: none; }
+.layer-card ul li::before { content: '·'; color: var(--blue); margin-right: 6px; }
+code { font-family: monospace; font-size: 12px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; color: var(--blue); }
+.layer-card .layer-note { font-size: 12px; color: var(--muted); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-style: italic; }
+
+/* ── 3-COL JUSTIFY ── */
+.three-col { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+.col-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+.col-card .col-icon { font-size: 28px; margin-bottom: 12px; }
+.col-card h4 { margin-bottom: 10px; }
+.col-card p { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+/* ── TABS ── */
+.tab-bar { display: flex; gap: 4px; margin-bottom: 28px; background: var(--card); padding: 6px; border-radius: 10px; border: 1px solid var(--border); width: fit-content; }
+.tab-btn {
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tab-btn.active { background: var(--blue); color: #fff; font-weight: 600; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── SEMAPHORE TABLE ── */
+.semaphore-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 24px 0; }
+.semaphore-table th { background: rgba(255,255,255,0.05); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); border-bottom: 1px solid var(--border); }
+.semaphore-table td { padding: 12px 16px; border-bottom: 1px solid rgba(51,65,85,0.4); }
+.semaphore-table tr.elite td { background: rgba(16,185,129,0.06); }
+.semaphore-table tr.low td, .semaphore-table tr.medium td { background: rgba(239,68,68,0.04); }
+
+/* ── CHART CONTAINERS ── */
+.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 28px 0; }
+.chart-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.chart-box h4 { margin-bottom: 4px; }
+.chart-box .chart-note { font-size: 12px; color: var(--muted); margin-top: 10px; }
+.chart-wrapper { position: relative; height: 300px; }
+
+/* ── SCATTER INSIGHT ── */
+.insight-card {
+  background: var(--card);
+  border-left: 4px solid var(--yellow);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-top: 16px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ── TIMELINE ── */
+.timeline-row {
+  display: flex;
+  gap: 4px;
+  margin: 28px 0 10px;
+  height: 64px;
+  align-items: stretch;
+}
+.tl-block {
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.tl-block .tl-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8; }
+.tl-block .tl-time { font-size: 16px; font-weight: 700; }
+.tl-block .tl-badge { font-size: 9px; font-weight: 700; margin-top: 2px; }
+.tl-green { background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4); }
+.tl-red { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); }
+.tl-yellow { background: rgba(245,158,11,0.2); border: 1px solid rgba(245,158,11,0.4); }
+.tl-blue { background: rgba(14,165,233,0.2); border: 1px solid rgba(14,165,233,0.4); }
+.tl-total { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+/* ── HYPOTHESIS GRID ── */
+.hypo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+.hypo-card { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+.hypo-card .hypo-num { font-size: 11px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+.hypo-card .hypo-icon { font-size: 28px; margin-bottom: 10px; }
+.hypo-card h4 { margin-bottom: 10px; color: var(--text); }
+.hypo-card p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+/* ── CONCLUSION CARD ── */
+.conclusion-card {
+  background: var(--card);
+  border-top: 3px solid var(--blue);
+  border-radius: 12px;
+  padding: 48px;
+  text-align: center;
+  margin-top: 32px;
+}
+.conclusion-card h3 { font-size: 22px; margin-bottom: 24px; }
+.conclusion-card p { font-size: 15px; color: var(--muted); line-height: 1.9; max-width: 780px; margin: 0 auto 20px; }
+
+/* ── MINI TABLE PRODUCT IMPACT ── */
+.mini-table-wrap { margin: 20px 0; overflow-x: auto; }
+.mini-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mini-table th { background: rgba(255,255,255,0.05); padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); border-bottom: 1px solid var(--border); }
+.mini-table td { padding: 8px 12px; border-bottom: 1px solid rgba(51,65,85,0.4); font-size: 12px; }
+.mini-table td:first-child { font-family: monospace; color: var(--blue); }
+.mini-table td:nth-child(2) { font-family: monospace; color: var(--green); font-size: 11px; }
+.mini-table td:nth-child(3) { color: var(--muted); }
+.mini-table tr:last-child td { border-bottom: none; }
+
+/* ── FOOTER ── */
+footer {
+  margin-left: var(--sidebar-w);
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  padding: 32px 48px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+footer .footer-stack { margin-top: 8px; font-size: 12px; }
+footer strong { color: var(--text); }
+
+/* ── HERO ── */
+.hero-badge { margin-bottom: 20px; }
+.hero-subtitle { font-size: 18px; color: var(--muted); margin-top: 12px; max-width: 680px; line-height: 1.6; }
+.context-card { background: var(--card); border-left: 4px solid var(--red); border-radius: 10px; padding: 20px 24px; margin: 32px 0; font-size: 15px; line-height: 1.7; color: var(--muted); }
+.context-card strong { color: var(--text); }
+
+/* ── PR TABLE (Segmentação) ── */
+.pr-table-wrap { overflow-x: auto; margin: 24px 0; }
+.pr-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.pr-table th { background: rgba(255,255,255,0.05); padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); border-bottom: 1px solid var(--border); }
+.pr-table td { padding: 9px 12px; border-bottom: 1px solid rgba(51,65,85,0.4); }
+.pr-table tr.ia-row td { background: rgba(14,165,233,0.05); }
+.pr-table .reverted-badge { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 700; }
+.pr-table .ok-badge { color: var(--muted); font-size: 12px; }
+
+/* ── FILTERS ── */
+.filter-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+.filter-row select {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.filter-row select:focus { outline: none; border-color: var(--blue); }
+
+/* ── DRILL HEADER CARD ── */
+.drill-header { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; }
+.drill-header h4 { font-size: 16px; margin-bottom: 6px; }
+.drill-header .drill-meta { font-size: 13px; color: var(--muted); }
+
+/* ── CFR TABLE ── */
+.cfr-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 24px; }
+.cfr-table th { background: rgba(255,255,255,0.05); padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); border-bottom: 1px solid var(--border); }
+.cfr-table td { padding: 10px 14px; border-bottom: 1px solid rgba(51,65,85,0.4); }
+.cfr-table tr.cfr-green td { background: rgba(16,185,129,0.06); }
+.cfr-table .trend-up { color: var(--red); font-weight: 600; }
+.cfr-table .trend-down { color: var(--green); font-weight: 600; }
+.cfr-table .trend-stable { color: var(--muted); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+  .sidebar.open { transform: translateX(0); }
+  .hamburger { display: block; }
+  .overlay.show { display: block; }
+  main, footer { margin-left: 0; }
+  section { padding: 48px 20px; }
+  footer { padding: 24px 20px; }
+  .kpi-grid { grid-template-columns: repeat(2,1fr); }
+  .chart-row { grid-template-columns: 1fr; }
+  .three-col { grid-template-columns: 1fr; }
+  .layer-grid { grid-template-columns: 1fr; }
+  .hypo-grid { grid-template-columns: 1fr; }
+  .pipeline-flow { flex-direction: column; }
+  .pipeline-arrow { transform: rotate(90deg); justify-content: center; }
+  h1 { font-size: 28px; }
+  .conclusion-card { padding: 28px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── HAMBURGER ── -->
+<button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">TechFlow</div>
+    <span class="badge">Lead de Engenharia</span>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="#s1" data-section="s1"><span class="num">01</span> Visão Geral</a>
+    <a href="#s2" data-section="s2"><span class="num">02</span> Modelagem Dimensional</a>
+    <a href="#s3" data-section="s3"><span class="num">03</span> Pipeline ELT</a>
+    <a href="#s4" data-section="s4"><span class="num">04</span> Dashboard Executivo</a>
+    <a href="#s5" data-section="s5"><span class="num">05</span> Análise Estratégica</a>
+  </nav>
+  <div class="sidebar-footer">BI for Software Engineers · UniFECAF 2025</div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main>
+
+<!-- ══════════════════════════════════ -->
+<!-- SEÇÃO 1 — VISÃO GERAL             -->
+<!-- ══════════════════════════════════ -->
+<section id="s1">
+  <div class="hero-badge"><span class="badge-pill badge-blue">TechFlow · Proposta Técnica de BI</span></div>
+  <h1>Do Caos à Performance</h1>
+  <p class="hero-subtitle">Estratégia de Business Intelligence para Diagnosticar o Impacto da IA Generativa no Fluxo de Desenvolvimento</p>
+
+  <div class="context-card">
+    <strong>Contexto:</strong> Após a adoção de IA Generativa em janeiro de 2024, a TechFlow registrou aumento de 40% no volume de linhas de código — mas o Lead Time cresceu 89%, o Change Failure Rate saltou 8 pontos percentuais e o Code Review tornou-se o gargalo crítico do processo de entrega.
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-red">
+      <div class="kpi-icon">⏱</div>
+      <div class="kpi-value">34,1h</div>
+      <div class="kpi-label">Lead Time Médio Atual</div>
+      <div class="kpi-delta">↑ +89% vs pré-IA (18,1h)</div>
+      <div class="gauge-bar-wrap">
+        <div class="gauge-bar-label"><span>0h</span><span>Elite &lt;1h</span></div>
+        <div class="gauge-track"><div class="gauge-fill" style="width:92%;background:var(--red)"></div></div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-yellow">
+      <div class="kpi-icon">🚀</div>
+      <div class="kpi-value">8,2/sem</div>
+      <div class="kpi-label">Deploys por Semana</div>
+      <div class="kpi-delta">↓ -32% vs meta (12/sem)</div>
+      <div class="gauge-bar-wrap">
+        <div class="gauge-bar-label"><span>0</span><span>Meta: 12/sem</span></div>
+        <div class="gauge-track"><div class="gauge-fill" style="width:68%;background:var(--yellow)"></div></div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-red">
+      <div class="kpi-icon">🐛</div>
+      <div class="kpi-value">22%</div>
+      <div class="kpi-label">Change Failure Rate</div>
+      <div class="kpi-delta">↑ +8pp vs pré-IA (14%)</div>
+      <div class="gauge-bar-wrap">
+        <div class="gauge-bar-label"><span>0%</span><span>Elite &lt;5%</span></div>
+        <div class="gauge-track"><div class="gauge-fill" style="width:88%;background:var(--red)"></div></div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-green">
+      <div class="kpi-icon">🛡</div>
+      <div class="kpi-value">5,8h</div>
+      <div class="kpi-label">Mean Time to Restore</div>
+      <div class="kpi-delta">↓ -12% (única melhoria)</div>
+      <div class="gauge-bar-wrap">
+        <div class="gauge-bar-label"><span>0h</span><span>Elite &lt;1h</span></div>
+        <div class="gauge-track"><div class="gauge-fill" style="width:42%;background:var(--green)"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="banner-diagnostic">
+    ⚠️ <strong>Diagnóstico Central:</strong> A IA Generativa está operando como amplificador de volume, não de valor. O gargalo migrou de "escrever código" para "revisar código" — sem ganho líquido na velocidade de entrega ao usuário final.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- SEÇÃO 2 — MODELAGEM DIMENSIONAL   -->
+<!-- ══════════════════════════════════ -->
+<section id="s2">
+  <div class="section-header">
+    <h2>Star Schema — Modelo Dimensional TechFlow</h2>
+    <p class="subtitle">Granularidade: 1 linha = 1 evento de deploy em produção</p>
+  </div>
+
+  <!-- 2A. SVG STAR SCHEMA -->
+  <div class="star-schema-wrap">
+    <svg viewBox="0 0 800 520" xmlns="http://www.w3.org/2000/svg" style="font-family:'Inter',sans-serif;">
+      <!-- Dashed connection lines -->
+      <!-- dim_tempo (top center, bottom edge at y=130) to fato_deploys (top center x=400, y=180) -->
+      <line x1="400" y1="130" x2="400" y2="180" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 2"/>
+      <text x="417" y="160" fill="#94A3B8" font-size="10">
+        <rect x="408" y="150" width="28" height="16" fill="#1E293B" rx="2"/>
+        <tspan x="412" dy="0">N:1</tspan>
+      </text>
+      <!-- dim_repositorio (left at x=590, center y=260) to fato_deploys (right x=530, y=260) -->
+      <line x1="590" y1="260" x2="530" y2="260" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 2"/>
+      <text x="548" y="255" fill="#94A3B8" font-size="10">
+        <tspan>N:1</tspan>
+      </text>
+      <!-- dim_engenheiro (top at y=390, center x=400) to fato_deploys (bottom x=400, y=340) -->
+      <line x1="400" y1="390" x2="400" y2="340" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 2"/>
+      <text x="417" y="370" fill="#94A3B8" font-size="10">
+        <tspan>N:1</tspan>
+      </text>
+      <!-- dim_squad (right at x=210, center y=260) to fato_deploys (left x=270, y=260) -->
+      <line x1="210" y1="260" x2="270" y2="260" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 2"/>
+      <text x="224" y="255" fill="#94A3B8" font-size="10">
+        <tspan>N:1</tspan>
+      </text>
+
+      <!-- FATO_DEPLOYS (center) -->
+      <rect x="270" y="180" width="260" height="160" rx="10" fill="rgba(14,165,233,0.12)" stroke="#0EA5E9" stroke-width="2"/>
+      <text x="400" y="208" text-anchor="middle" font-size="15" font-weight="700" fill="#0EA5E9">fato_deploys</text>
+      <text x="400" y="225" text-anchor="middle" font-size="10" fill="#94A3B8">Tabela Fato · Grão: 1 deploy</text>
+      <line x1="280" y1="232" x2="520" y2="232" stroke="#334155" stroke-width="1"/>
+      <text x="285" y="247" font-size="10" font-family="monospace" fill="#CBD5E1">sk_deploy (PK)</text>
+      <text x="285" y="261" font-size="10" font-family="monospace" fill="#CBD5E1">sk_tempo (FK) · sk_repositorio (FK)</text>
+      <text x="285" y="275" font-size="10" font-family="monospace" fill="#CBD5E1">sk_engenheiro (FK) · sk_squad (FK)</text>
+      <text x="285" y="289" font-size="10" font-family="monospace" fill="#94A3B8">lead_time_total · coding_time</text>
+      <text x="285" y="303" font-size="10" font-family="monospace" fill="#94A3B8">review_time · merge_time · deploy_time</text>
+      <text x="285" y="317" font-size="10" font-family="monospace" fill="#94A3B8">fl_sucesso · fl_revertido · fl_hotfix</text>
+
+      <!-- DIM_TEMPO (top) -->
+      <rect x="290" y="20" width="220" height="110" rx="10" fill="rgba(16,185,129,0.12)" stroke="#10B981" stroke-width="1.5"/>
+      <text x="400" y="44" text-anchor="middle" font-size="13" font-weight="700" fill="#10B981">dim_tempo</text>
+      <line x1="300" y1="50" x2="500" y2="50" stroke="#1E4038" stroke-width="1"/>
+      <text x="305" y="64" font-size="9.5" font-family="monospace" fill="#94A3B8">sk_tempo (PK), data_completa</text>
+      <text x="305" y="77" font-size="9.5" font-family="monospace" fill="#94A3B8">dia_semana, semana_ano, mes_nome</text>
+      <text x="305" y="90" font-size="9.5" font-family="monospace" fill="#94A3B8">trimestre, ano, sprint_numero</text>
+      <text x="305" y="103" font-size="9.5" font-family="monospace" fill="#94A3B8">is_dia_util, periodo_adocao_ia</text>
+      <text x="305" y="118" font-size="9" font-family="monospace" fill="#10B981">Dimensão Temporal</text>
+
+      <!-- DIM_REPOSITORIO (right) -->
+      <rect x="590" y="195" width="200" height="130" rx="10" fill="rgba(139,92,246,0.12)" stroke="#8B5CF6" stroke-width="1.5"/>
+      <text x="690" y="217" text-anchor="middle" font-size="13" font-weight="700" fill="#8B5CF6">dim_repositorio</text>
+      <line x1="600" y1="224" x2="780" y2="224" stroke="#2E1A4A" stroke-width="1"/>
+      <text x="600" y="238" font-size="9.5" font-family="monospace" fill="#94A3B8">sk_repositorio (PK)</text>
+      <text x="600" y="251" font-size="9.5" font-family="monospace" fill="#94A3B8">nome_repo, squad_responsavel</text>
+      <text x="600" y="264" font-size="9.5" font-family="monospace" fill="#94A3B8">dominio_produto, linguagem</text>
+      <text x="600" y="277" font-size="9.5" font-family="monospace" fill="#94A3B8">criticidade</text>
+      <text x="600" y="290" font-size="9.5" font-family="monospace" fill="#94A3B8">tem_cobertura_testes</text>
+      <text x="600" y="315" font-size="9" font-family="monospace" fill="#8B5CF6">Dimensão Repositório</text>
+
+      <!-- DIM_ENGENHEIRO (bottom) -->
+      <rect x="290" y="390" width="220" height="110" rx="10" fill="rgba(245,158,11,0.12)" stroke="#F59E0B" stroke-width="1.5"/>
+      <text x="400" y="413" text-anchor="middle" font-size="13" font-weight="700" fill="#F59E0B">dim_engenheiro</text>
+      <line x1="300" y1="420" x2="500" y2="420" stroke="#3D2E03" stroke-width="1"/>
+      <text x="305" y="434" font-size="9.5" font-family="monospace" fill="#94A3B8">sk_engenheiro (PK), nome</text>
+      <text x="305" y="447" font-size="9.5" font-family="monospace" fill="#94A3B8">nivel, squad_atual</text>
+      <text x="305" y="460" font-size="9.5" font-family="monospace" fill="#94A3B8">usa_ia_generativa</text>
+      <text x="305" y="473" font-size="9.5" font-family="monospace" fill="#94A3B8">ferramenta_ia_principal</text>
+      <text x="305" y="490" font-size="9" font-family="monospace" fill="#F59E0B">Dimensão Engenheiro</text>
+
+      <!-- DIM_SQUAD (left) -->
+      <rect x="10" y="195" width="200" height="130" rx="10" fill="rgba(6,182,212,0.12)" stroke="#06B6D4" stroke-width="1.5"/>
+      <text x="110" y="217" text-anchor="middle" font-size="13" font-weight="700" fill="#06B6D4">dim_squad</text>
+      <line x1="20" y1="224" x2="200" y2="224" stroke="#062832" stroke-width="1"/>
+      <text x="20" y="238" font-size="9.5" font-family="monospace" fill="#94A3B8">sk_squad (PK)</text>
+      <text x="20" y="251" font-size="9.5" font-family="monospace" fill="#94A3B8">nome_squad, area_negocio</text>
+      <text x="20" y="264" font-size="9.5" font-family="monospace" fill="#94A3B8">lider_tecnico, tamanho_equipe</text>
+      <text x="20" y="277" font-size="9.5" font-family="monospace" fill="#94A3B8">metodologia, nivel_dora</text>
+      <text x="20" y="290" font-size="9.5" font-family="monospace" fill="#94A3B8">adotou_ia</text>
+      <text x="20" y="315" font-size="9" font-family="monospace" fill="#06B6D4">Dimensão Squad</text>
+    </svg>
+  </div>
+
+  <!-- 2B. ACCORDIONS -->
+  <div id="accordions">
+    <!-- CARD 1: fato_deploys -->
+    <div class="accordion" id="acc1">
+      <div class="accordion-header" onclick="toggleAccordion('acc1')">
+        <div class="accordion-header-left">
+          <span class="accordion-icon">📊</span>
+          <div>
+            <strong>fato_deploys</strong>
+            <div style="font-size:12px;color:var(--muted)">Tabela central do modelo</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="badge-pill badge-blue">Fato</span>
+          <span class="accordion-arrow">▼</span>
+        </div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-inner">
+          <table class="data-table">
+            <thead><tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr></thead>
+            <tbody>
+              <tr><td>sk_deploy</td><td>STRING</td><td>Surrogate key UUID do evento de deploy (PK)</td></tr>
+              <tr><td>sk_tempo</td><td>INTEGER</td><td>FK → dim_tempo (data do deploy)</td></tr>
+              <tr><td>sk_repositorio</td><td>INTEGER</td><td>FK → dim_repositorio</td></tr>
+              <tr><td>sk_engenheiro</td><td>INTEGER</td><td>FK → dim_engenheiro (autor do PR)</td></tr>
+              <tr><td>sk_squad</td><td>INTEGER</td><td>FK → dim_squad</td></tr>
+              <tr><td>lead_time_total</td><td>NUMERIC</td><td>commit_at → deployed_at (horas)</td></tr>
+              <tr><td>coding_time</td><td>NUMERIC</td><td>primeiro commit → pr_opened_at (horas)</td></tr>
+              <tr><td>review_time</td><td>NUMERIC</td><td>pr_opened_at → pr_merged_at (horas)</td></tr>
+              <tr><td>merge_time</td><td>NUMERIC</td><td>pr_merged_at → deploy_triggered_at (horas)</td></tr>
+              <tr><td>deploy_time</td><td>NUMERIC</td><td>deploy_triggered_at → deployed_at (horas)</td></tr>
+              <tr><td>fl_sucesso</td><td>BOOLEAN</td><td>Deploy sem incidente nas 24h seguintes</td></tr>
+              <tr><td>fl_revertido</td><td>BOOLEAN</td><td>Rollback/revert executado após o deploy</td></tr>
+              <tr><td>fl_hotfix</td><td>BOOLEAN</td><td>Deploy emergencial de correção em produção</td></tr>
+              <tr><td>qtd_arquivos_alterados</td><td>INTEGER</td><td>Total de arquivos modificados no PR</td></tr>
+              <tr><td>qtd_linhas_adicionadas</td><td>INTEGER</td><td>Linhas inseridas (proxy de tamanho do PR)</td></tr>
+              <tr><td>qtd_revisores</td><td>INTEGER</td><td>Número de revisores únicos no PR</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 2: dim_tempo -->
+    <div class="accordion" id="acc2">
+      <div class="accordion-header" onclick="toggleAccordion('acc2')">
+        <div class="accordion-header-left">
+          <span class="accordion-icon">📅</span>
+          <div>
+            <strong>dim_tempo</strong>
+            <div style="font-size:12px;color:var(--muted)">Dimensão temporal com período de adoção de IA</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="badge-pill badge-green">Dimensão</span>
+          <span class="accordion-arrow">▼</span>
+        </div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-inner">
+          <table class="data-table">
+            <thead><tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr></thead>
+            <tbody>
+              <tr><td>sk_tempo</td><td>INTEGER</td><td>Surrogate key da data (PK)</td></tr>
+              <tr><td>data_completa</td><td>DATE</td><td>Data no formato YYYY-MM-DD</td></tr>
+              <tr><td>dia_semana</td><td>VARCHAR(15)</td><td>Nome do dia (Segunda, Terça...)</td></tr>
+              <tr><td>num_dia_semana</td><td>TINYINT</td><td>1=Segunda ... 7=Domingo</td></tr>
+              <tr><td>semana_ano</td><td>TINYINT</td><td>Semana ISO do ano (1–53)</td></tr>
+              <tr><td>mes_numero</td><td>TINYINT</td><td>Número do mês (1–12)</td></tr>
+              <tr><td>mes_nome</td><td>VARCHAR(15)</td><td>Nome do mês por extenso</td></tr>
+              <tr><td>trimestre</td><td>TINYINT</td><td>Trimestre fiscal (1–4)</td></tr>
+              <tr><td>ano</td><td>SMALLINT</td><td>Ano com 4 dígitos</td></tr>
+              <tr><td>sprint_numero</td><td>SMALLINT</td><td>Número da sprint ativa naquela data</td></tr>
+              <tr><td>is_dia_util</td><td>BOOLEAN</td><td>True se não é fim de semana ou feriado nacional</td></tr>
+              <tr><td>periodo_adocao_ia</td><td>VARCHAR(10)</td><td>'pre_ia' (antes jan/2024) ou 'pos_ia'</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 3: dim_repositorio -->
+    <div class="accordion" id="acc3">
+      <div class="accordion-header" onclick="toggleAccordion('acc3')">
+        <div class="accordion-header-left">
+          <span class="accordion-icon">📁</span>
+          <div>
+            <strong>dim_repositorio</strong>
+            <div style="font-size:12px;color:var(--muted)">Repositórios GitHub e suas características</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="badge-pill badge-purple">Dimensão</span>
+          <span class="accordion-arrow">▼</span>
+        </div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-inner">
+          <table class="data-table">
+            <thead><tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr></thead>
+            <tbody>
+              <tr><td>sk_repositorio</td><td>INTEGER</td><td>Surrogate key do repositório (PK)</td></tr>
+              <tr><td>nome_repo</td><td>VARCHAR(100)</td><td>Nome do repositório no GitHub</td></tr>
+              <tr><td>squad_responsavel</td><td>VARCHAR(50)</td><td>Squad dona do repositório</td></tr>
+              <tr><td>dominio_produto</td><td>VARCHAR(50)</td><td>Área de negócio (checkout, onboarding...)</td></tr>
+              <tr><td>linguagem_principal</td><td>VARCHAR(30)</td><td>Linguagem predominante (TypeScript, Python...)</td></tr>
+              <tr><td>criticidade</td><td>VARCHAR(10)</td><td>Nível de impacto: alta / media / baixa</td></tr>
+              <tr><td>tem_cobertura_testes</td><td>BOOLEAN</td><td>True se cobertura de testes &gt; 70%</td></tr>
+              <tr><td>num_contribuidores</td><td>INTEGER</td><td>Total de engenheiros com commits ativos</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 4: dim_engenheiro -->
+    <div class="accordion" id="acc4">
+      <div class="accordion-header" onclick="toggleAccordion('acc4')">
+        <div class="accordion-header-left">
+          <span class="accordion-icon">👤</span>
+          <div>
+            <strong>dim_engenheiro</strong>
+            <div style="font-size:12px;color:var(--muted)">Perfil dos engenheiros e uso de IA</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="badge-pill badge-yellow" style="color:var(--yellow)">Dimensão</span>
+          <span class="accordion-arrow">▼</span>
+        </div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-inner">
+          <table class="data-table">
+            <thead><tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr></thead>
+            <tbody>
+              <tr><td>sk_engenheiro</td><td>INTEGER</td><td>Surrogate key do engenheiro (PK)</td></tr>
+              <tr><td>nome</td><td>VARCHAR(100)</td><td>Nome completo</td></tr>
+              <tr><td>nivel</td><td>VARCHAR(10)</td><td>junior / pleno / senior / staff</td></tr>
+              <tr><td>squad_atual</td><td>VARCHAR(50)</td><td>Squad de alocação atual</td></tr>
+              <tr><td>usa_ia_generativa</td><td>BOOLEAN</td><td>True se usa GitHub Copilot, ChatGPT ou similar</td></tr>
+              <tr><td>ferramenta_ia_principal</td><td>VARCHAR(50)</td><td>Nome da ferramenta IA mais utilizada</td></tr>
+              <tr><td>anos_experiencia</td><td>TINYINT</td><td>Anos de experiência em engenharia de software</td></tr>
+              <tr><td>ativo</td><td>BOOLEAN</td><td>True se ainda na empresa</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 5: dim_squad -->
+    <div class="accordion" id="acc5">
+      <div class="accordion-header" onclick="toggleAccordion('acc5')">
+        <div class="accordion-header-left">
+          <span class="accordion-icon">👥</span>
+          <div>
+            <strong>dim_squad</strong>
+            <div style="font-size:12px;color:var(--muted)">Times e nível de maturidade DORA</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="badge-pill badge-cyan">Dimensão</span>
+          <span class="accordion-arrow">▼</span>
+        </div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-inner">
+          <table class="data-table">
+            <thead><tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr></thead>
+            <tbody>
+              <tr><td>sk_squad</td><td>INTEGER</td><td>Surrogate key da squad (PK)</td></tr>
+              <tr><td>nome_squad</td><td>VARCHAR(50)</td><td>Nome da squad</td></tr>
+              <tr><td>area_negocio</td><td>VARCHAR(50)</td><td>Área de produto atendida</td></tr>
+              <tr><td>lider_tecnico</td><td>VARCHAR(100)</td><td>Nome do tech lead responsável</td></tr>
+              <tr><td>tamanho_equipe</td><td>TINYINT</td><td>Número de engenheiros na squad</td></tr>
+              <tr><td>metodologia</td><td>VARCHAR(10)</td><td>scrum / kanban / shape-up</td></tr>
+              <tr><td>nivel_dora</td><td>VARCHAR(10)</td><td>Classificação DORA: elite / high / medium / low</td></tr>
+              <tr><td>adotou_ia</td><td>BOOLEAN</td><td>True se toda a squad utiliza IA Generativa</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2C. SQL QUERY -->
+  <div class="sql-card">
+    <div class="sql-card-header">
+      <h4>Exemplo de Consulta SQL — Métricas DORA por Squad</h4>
+      <span class="badge-pill badge-blue">BigQuery</span>
+    </div>
+    <pre class="sql"><code><span class="kw">SELECT</span>
+  t.ano,
+  t.semana_ano,
+  s.nome_squad,
+  <span class="fn">COUNT</span>(*)                                    <span class="kw">AS</span> qtd_deploys,
+  <span class="fn">AVG</span>(f.lead_time_total)                      <span class="kw">AS</span> lead_time_medio_horas,
+  <span class="fn">AVG</span>(f.review_time)                          <span class="kw">AS</span> review_time_medio_horas,
+  <span class="fn">COUNTIF</span>(f.fl_revertido) / <span class="fn">COUNT</span>(*) * 100    <span class="kw">AS</span> change_failure_rate_pct
+<span class="kw">FROM</span> <span class="tbl">refined.fato_deploys</span> f
+<span class="kw">JOIN</span> <span class="tbl">refined.dim_tempo</span>      t <span class="kw">ON</span> f.sk_tempo       = t.sk_tempo
+<span class="kw">JOIN</span> <span class="tbl">refined.dim_squad</span>      s <span class="kw">ON</span> f.sk_squad       = s.sk_squad
+<span class="kw">WHERE</span> f.fl_sucesso = <span class="str">TRUE</span>
+  <span class="kw">AND</span> t.ano = <span class="str">2025</span>
+<span class="kw">GROUP BY</span> 1, 2, 3
+<span class="kw">ORDER BY</span> 1, 2, 3;</code></pre>
+    <div class="sql-note">Executado no BigQuery · dataset: <strong>refined</strong> · Orquestrado via Apache Airflow (DAG diária 06h00 BRT)</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- SEÇÃO 3 — PIPELINE ELT            -->
+<!-- ══════════════════════════════════ -->
+<section id="s3">
+  <div class="section-header">
+    <h2>Arquitetura ELT — Raw → Trusted → Refined</h2>
+    <p class="subtitle">Dados do GitHub e Jira consolidados em star schema analítico com rastreabilidade total e latência de minutos</p>
+  </div>
+
+  <!-- 3A. PIPELINE FLOW -->
+  <div class="pipeline-flow">
+    <div class="pipeline-block">
+      <div class="sources-icons">
+        <span class="src-icon" title="GitHub">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="#F1F5F9"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        </span>
+        <span class="src-icon" title="Jira" style="color:#0EA5E9;font-size:22px;font-weight:700;">J</span>
+      </div>
+      <h4>GitHub API · Jira API</h4>
+      <div class="pipe-sub">pull_requests, commits,<br>deployments, issues, sprints</div>
+    </div>
+    <div class="pipeline-arrow"><span>→</span></div>
+    <div class="pipeline-block">
+      <div><span class="tool-badge tool-airbyte">Airbyte</span></div>
+      <h4>Conectores nativos<br>sem transformação</h4>
+      <div class="pipe-sub">Incremental · 6h/ciclo</div>
+    </div>
+    <div class="pipeline-arrow"><span>→</span></div>
+    <div class="pipeline-block">
+      <div><span class="tool-badge tool-bq">BigQuery</span></div>
+      <h4>dataset: raw_layer</h4>
+      <div class="pipe-sub">github_raw.pull_requests<br>jira_raw.issues<br>github_raw.deployments</div>
+      <div class="pipe-detail">Imutável · Audit log</div>
+    </div>
+    <div class="pipeline-arrow"><span>→</span></div>
+    <div class="pipeline-block">
+      <div><span class="tool-badge tool-dbt">dbt Core</span></div>
+      <h4>dataset: trusted</h4>
+      <div class="pipe-sub">stg_github__pull_requests<br>stg_jira__issues<br>stg_deployments</div>
+      <div class="pipe-detail">Deduplicated · Tipado · Validado</div>
+    </div>
+    <div class="pipeline-arrow"><span>→</span></div>
+    <div class="pipeline-block">
+      <div><span class="tool-badge tool-bq-analytics">BigQuery Analytics</span></div>
+      <h4>dataset: refined</h4>
+      <div class="pipe-sub">fato_deploys<br>dim_tempo · dim_repositorio<br>dim_engenheiro · dim_squad</div>
+      <div class="pipe-detail">Star Schema · Pronto para BI</div>
+    </div>
+  </div>
+
+  <!-- 3B. LAYER CARDS -->
+  <div class="layer-grid">
+    <div class="layer-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <h4>Camada RAW</h4>
+        <span class="badge-pill badge-orange">Bronze</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;"><strong style="color:var(--text)">Ferramenta:</strong> Airbyte open-source</div>
+      <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">Fontes extraídas</div>
+      <ul>
+        <li>GitHub API: pull_requests, commits, deployments, workflow_runs, check_runs</li>
+        <li>Jira API: issues, sprints, changelog de status, story_points</li>
+        <li>Frequência: Incremental a cada 6 horas · Full refresh semanal</li>
+      </ul>
+      <div class="layer-note">Schema evolution automático pelo Airbyte. Dados preservados sem transformação. Destino: BigQuery · tabelas prefixadas com <code>raw_</code>. Retenção: 90 dias.</div>
+    </div>
+
+    <div class="layer-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <h4>Camada TRUSTED</h4>
+        <span class="badge-pill badge-silver">Silver</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;"><strong style="color:var(--text)">Ferramenta:</strong> dbt Core + BigQuery</div>
+      <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">Operações</div>
+      <ul>
+        <li>Deduplicação por chave natural (<code>pr_id</code>, <code>deployment_id</code>)</li>
+        <li>Parse e normalização de timestamps para UTC-3</li>
+        <li>JOIN entre pull_request e deployment_event via SHA do commit</li>
+        <li>Cast de tipos e validação NOT NULL em campos críticos</li>
+        <li>Filtro de bots: <code>WHERE author NOT LIKE '%[bot]%'</code></li>
+      </ul>
+      <div class="layer-note">Tabelas: <code>stg_github__pull_requests</code>, <code>stg_deployments</code>, <code>stg_jira__issues</code>, <code>stg_engineers</code>. Testes dbt: not_null, unique, accepted_values em todos os campos PK/FK.</div>
+    </div>
+
+    <div class="layer-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <h4>Camada REFINED</h4>
+        <span class="badge-pill badge-gold">Gold</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;"><strong style="color:var(--text)">Ferramenta:</strong> dbt models SQL + BigQuery</div>
+      <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">Transformações-chave</div>
+      <ul>
+        <li><code>lead_time_total = TIMESTAMP_DIFF(deployed_at, first_commit_at, HOUR)</code></li>
+        <li><code>review_time = TIMESTAMP_DIFF(pr_merged_at, pr_opened_at, HOUR)</code></li>
+        <li><code>coding_time = TIMESTAMP_DIFF(pr_opened_at, first_commit_at, HOUR)</code></li>
+        <li><code>periodo_adocao_ia = CASE WHEN data &lt; '2024-01-15' THEN 'pre_ia' ELSE 'pos_ia' END</code></li>
+        <li>Surrogate keys via <code>ROW_NUMBER() OVER (ORDER BY ...)</code></li>
+      </ul>
+      <div class="layer-note">Orquestrador: Apache Airflow · DAG diária 06h00 BRT. Consumo: Looker Studio conectado diretamente ao BigQuery.</div>
+    </div>
+  </div>
+
+  <!-- 3C. ELT vs ETL -->
+  <div class="card card-accent-top-blue" style="margin-top:16px;">
+    <h3 style="margin-bottom:24px;">Por que ELT, não ETL? — 3 Razões Técnicas</h3>
+    <div class="three-col">
+      <div class="col-card">
+        <div class="col-icon">🖥</div>
+        <h4>Processamento MPP</h4>
+        <p>BigQuery processa terabytes em segundos via arquitetura massivamente paralela. O motor de transformação é o próprio warehouse, eliminando servidores ETL dedicados e seu custo de manutenção.</p>
+      </div>
+      <div class="col-card">
+        <div class="col-icon">💻</div>
+        <h4>Dados Brutos Preservados</h4>
+        <p>A camada raw_layer permanece imutável. Quando a definição de "deploy com falha" é refinada, basta criar um novo modelo dbt — sem reprocessar o pipeline de extração ou perder histórico.</p>
+      </div>
+      <div class="col-card">
+        <div class="col-icon">🔍</div>
+        <h4>Audit Log Completo</h4>
+        <p>Toda transformação é um modelo SQL versionado no Git, com testes automatizados e documentação gerada pelo dbt. Qualquer métrica é rastreável até o dado bruto original.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- SEÇÃO 4 — DASHBOARD EXECUTIVO     -->
+<!-- ══════════════════════════════════ -->
+<section id="s4">
+  <div class="section-header">
+    <h2>Dashboard Executivo — Visão do CTO</h2>
+    <p class="subtitle">3 níveis de profundidade analítica · da macro-visão ao drill-down</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('tab1',this)">Nível 1 · Macro DORA</button>
+    <button class="tab-btn" onclick="switchTab('tab2',this)">Nível 2 · Segmentação</button>
+    <button class="tab-btn" onclick="switchTab('tab3',this)">Nível 3 · Drill-down</button>
+  </div>
+
+  <!-- TAB 1 -->
+  <div class="tab-panel active" id="tab1">
+    <div class="kpi-grid">
+      <div class="kpi-card kpi-red">
+        <div class="kpi-icon">⏱</div>
+        <div class="kpi-value">34,1h</div>
+        <div class="kpi-label">Lead Time Médio</div>
+        <div class="kpi-delta">↑ +89% vs pré-IA</div>
+        <div class="gauge-bar-wrap">
+          <div class="gauge-bar-label"><span>Atual</span><span>Elite: &lt;1h</span></div>
+          <div class="gauge-track"><div class="gauge-fill" style="width:95%;background:var(--red)"></div></div>
+        </div>
+      </div>
+      <div class="kpi-card kpi-yellow">
+        <div class="kpi-icon">🚀</div>
+        <div class="kpi-value">8,2/sem</div>
+        <div class="kpi-label">Deployment Frequency</div>
+        <div class="kpi-delta">↓ -32% vs meta</div>
+        <div class="gauge-bar-wrap">
+          <div class="gauge-bar-label"><span>Atual</span><span>Meta: 12/sem</span></div>
+          <div class="gauge-track"><div class="gauge-fill" style="width:68%;background:var(--yellow)"></div></div>
+        </div>
+      </div>
+      <div class="kpi-card kpi-red">
+        <div class="kpi-icon">🐛</div>
+        <div class="kpi-value">22%</div>
+        <div class="kpi-label">Change Failure Rate</div>
+        <div class="kpi-delta">↑ +8pp vs pré-IA</div>
+        <div class="gauge-bar-wrap">
+          <div class="gauge-bar-label"><span>Atual</span><span>Elite: &lt;5%</span></div>
+          <div class="gauge-track"><div class="gauge-fill" style="width:88%;background:var(--red)"></div></div>
+        </div>
+      </div>
+      <div class="kpi-card kpi-green">
+        <div class="kpi-icon">🛡</div>
+        <div class="kpi-value">5,8h</div>
+        <div class="kpi-label">MTTR</div>
+        <div class="kpi-delta">↓ -12% (melhoria)</div>
+        <div class="gauge-bar-wrap">
+          <div class="gauge-bar-label"><span>Atual</span><span>Elite: &lt;1h</span></div>
+          <div class="gauge-track"><div class="gauge-fill" style="width:42%;background:var(--green)"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom:16px;">Semáforo DORA por Squad</h3>
+    <div style="overflow-x:auto;">
+      <table class="semaphore-table">
+        <thead>
+          <tr><th>Squad</th><th>Dep. Freq</th><th>Lead Time</th><th>CFR</th><th>MTTR</th><th>Nível DORA</th></tr>
+        </thead>
+        <tbody>
+          <tr class="elite"><td><strong>Payments</strong></td><td>14/sem</td><td>18h</td><td>8%</td><td>2h</td><td>🟢 Elite</td></tr>
+          <tr><td>Checkout</td><td>9/sem</td><td>28h</td><td>15%</td><td>5h</td><td>🟡 High</td></tr>
+          <tr class="medium"><td>Onboarding</td><td>6/sem</td><td>41h</td><td>24%</td><td>7h</td><td>🔴 Medium</td></tr>
+          <tr class="low"><td>Platform</td><td>4/sem</td><td>52h</td><td>31%</td><td>9h</td><td>🔴 Low</td></tr>
+          <tr class="low"><td>Data &amp; ML</td><td>3/sem</td><td>67h</td><td>38%</td><td>14h</td><td>🔴 Low</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-row" style="margin-top:32px;">
+      <div class="chart-box">
+        <h4>Lead Time — Últimos 90 dias</h4>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Semanas de Jan a Mar/2024</p>
+        <div class="chart-wrapper">
+          <canvas id="chartLeadTime"></canvas>
+        </div>
+        <div class="chart-note">Após a adoção de IA (15/jan), o Lead Time saiu do threshold High (24h) em direção ao Medium.</div>
+      </div>
+      <div class="chart-box">
+        <h4>Deployment Frequency por Squad</h4>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Pré-IA vs Pós-IA</p>
+        <div class="chart-wrapper">
+          <canvas id="chartDepFreq"></canvas>
+        </div>
+        <div class="chart-note">Payments manteve performance — única squad a operar em regime Elite pós-adoção de IA.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2 -->
+  <div class="tab-panel" id="tab2">
+    <div class="filter-row">
+      <select id="filterSquad">
+        <option>Todas as Squads</option>
+        <option>Payments</option>
+        <option>Checkout</option>
+        <option>Onboarding</option>
+        <option>Platform</option>
+        <option>Data &amp; ML</option>
+      </select>
+      <select id="filterPeriod">
+        <option>Últimos 30 dias</option>
+        <option>Últimos 90 dias</option>
+        <option>Últimos 6 meses</option>
+      </select>
+      <select id="filterIA">
+        <option>Todos (ia_assistido)</option>
+        <option>ia_assistido = true</option>
+        <option>ia_assistido = false</option>
+      </select>
+      <select id="filterNivel">
+        <option>Todos os Níveis</option>
+        <option>junior</option>
+        <option>pleno</option>
+        <option>senior</option>
+        <option>staff</option>
+      </select>
+    </div>
+
+    <h3 style="margin-bottom:16px;">Top 10 PRs com Maior review_time — Gargalo Identificado</h3>
+    <div class="pr-table-wrap">
+      <table class="pr-table" id="prTable">
+        <thead>
+          <tr>
+            <th>#</th><th>Repositório</th><th>Autor</th><th>Nível</th>
+            <th>qtd_linhas_adicionadas</th><th>review_time</th>
+            <th>ia_assistido</th><th>fl_revertido</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="ia-row"><td>1</td><td>checkout-api</td><td>Ana S.</td><td>senior</td><td>1.847</td><td><strong>67h</strong></td><td>✅ Sim</td><td><span class="ok-badge">❌ Não</span></td></tr>
+          <tr class="ia-row"><td>2</td><td>onboarding-web</td><td>Carlos M.</td><td>pleno</td><td>1.203</td><td><strong>58h</strong></td><td>✅ Sim</td><td><span class="reverted-badge">✅ SIM</span></td></tr>
+          <tr class="ia-row"><td>3</td><td>platform-core</td><td>Bruno L.</td><td>junior</td><td>934</td><td><strong>52h</strong></td><td>✅ Sim</td><td><span class="ok-badge">❌ Não</span></td></tr>
+          <tr><td>4</td><td>checkout-api</td><td>Fernanda R.</td><td>senior</td><td>812</td><td><strong>48h</strong></td><td>❌ Não</td><td><span class="ok-badge">❌ Não</span></td></tr>
+          <tr class="ia-row"><td>5</td><td>data-pipeline</td><td>Diego F.</td><td>pleno</td><td>1.456</td><td><strong>44h</strong></td><td>✅ Sim</td><td><span class="reverted-badge">✅ SIM</span></td></tr>
+          <tr class="ia-row"><td>6</td><td>onboarding-web</td><td>Mariana T.</td><td>pleno</td><td>678</td><td><strong>41h</strong></td><td>✅ Sim</td><td><span class="ok-badge">❌ Não</span></td></tr>
+          <tr><td>7</td><td>payments-service</td><td>Lucas P.</td><td>staff</td><td>287</td><td><strong>19h</strong></td><td>❌ Não</td><td><span class="ok-badge">❌ Não</span></td></tr>
+          <tr class="ia-row"><td>8</td><td>platform-core</td><td>Rafael K.</td><td>junior</td><td>1.102</td><td><strong>38h</strong></td><td>✅ Sim</td><td><span class="ok-badge">❌ Não</span></td></tr>
+          <tr class="ia-row"><td>9</td><td>checkout-api</td><td>Ana S.</td><td>senior</td><td>923</td><td><strong>36h</strong></td><td>✅ Sim</td><td><span class="reverted-badge">✅ SIM</span></td></tr>
+          <tr class="ia-row"><td>10</td><td>data-pipeline</td><td>Pedro V.</td><td>pleno</td><td>745</td><td><strong>34h</strong></td><td>✅ Sim</td><td><span class="ok-badge">❌ Não</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-box" style="margin-top:24px;">
+      <h4>qtd_linhas_adicionadas vs review_time</h4>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">🔵 IA = Não &nbsp;&nbsp; 🟠 IA = Sim</p>
+      <div class="chart-wrapper">
+        <canvas id="chartScatter"></canvas>
+      </div>
+    </div>
+
+    <div class="insight-card">
+      PRs com <code>ia_assistido = true</code> são, em média, <strong>2,3x maiores em linhas de código</strong> e levam <strong>3,1x mais tempo de review_time</strong>. Este é o gargalo estrutural da TechFlow: a IA acelera o <code>coding_time</code> mas satura a capacidade de revisão humana.
+    </div>
+  </div>
+
+  <!-- TAB 3 -->
+  <div class="tab-panel" id="tab3">
+    <div class="drill-header">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <h4>Deploy #847 · feat: novo fluxo de checkout · Squad: Checkout</h4>
+        <span class="badge-pill badge-blue">ia_assistido: true</span>
+        <span class="badge-pill badge-green">fl_sucesso: true</span>
+      </div>
+      <div class="drill-meta">
+        lead_time_total: <strong>29,8h</strong> &nbsp;·&nbsp; qtd_linhas_adicionadas: <strong>1.203</strong> &nbsp;·&nbsp; qtd_revisores: <strong>2</strong> &nbsp;·&nbsp; fl_revertido: <strong>false</strong>
+      </div>
+    </div>
+
+    <h4 style="margin-bottom:12px;color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.05em;">Decomposição do Lead Time</h4>
+    <div class="timeline-row">
+      <div class="tl-block tl-green" style="flex:1.6;">
+        <div class="tl-label">Coding Time</div>
+        <div class="tl-time">8,0h</div>
+      </div>
+      <div class="tl-block tl-red" style="flex:3.8;">
+        <div class="tl-label">Review Time</div>
+        <div class="tl-time">19,0h</div>
+        <div class="tl-badge" style="color:var(--red)">⚠️ GARGALO</div>
+      </div>
+      <div class="tl-block tl-yellow" style="flex:0.5;">
+        <div class="tl-label">Merge</div>
+        <div class="tl-time">2,3h</div>
+      </div>
+      <div class="tl-block tl-blue" style="flex:0.1;">
+        <div class="tl-label">Deploy</div>
+        <div class="tl-time">0,5h</div>
+      </div>
+    </div>
+    <div class="tl-total">Lead Time Total: <strong>29,8h</strong> &nbsp;|&nbsp; Threshold DORA Elite: <strong>24h</strong> &nbsp;|&nbsp; Status: <span style="color:var(--yellow)">⚠️ Acima do threshold</span></div>
+
+    <div class="chart-box" style="margin-bottom:24px;">
+      <h4>Distribuição do lead_time_total — últimos 90 dias</h4>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;"><strong style="color:var(--red)">68%</strong> dos deploys excedem o threshold Elite de 24h · Linha tracejada = threshold</p>
+      <div class="chart-wrapper">
+        <canvas id="chartHistogram"></canvas>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom:16px;">Change Failure Rate (fl_revertido) por Repositório</h3>
+    <div style="overflow-x:auto;">
+      <table class="cfr-table">
+        <thead>
+          <tr><th>Repositório</th><th>Total Deploys</th><th>fl_revertido=true</th><th>CFR%</th><th>Trend</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>checkout-api</td><td>48</td><td>14</td><td>29,2%</td><td class="trend-up">↑ Pior</td></tr>
+          <tr><td>onboarding-web</td><td>37</td><td>9</td><td>24,3%</td><td class="trend-up">↑ Pior</td></tr>
+          <tr><td>data-pipeline</td><td>22</td><td>7</td><td>31,8%</td><td class="trend-up">↑ Pior</td></tr>
+          <tr><td>platform-core</td><td>31</td><td>6</td><td>19,4%</td><td class="trend-stable">→ Estável</td></tr>
+          <tr class="cfr-green"><td><strong>payments-service</strong></td><td>52</td><td>4</td><td>7,7%</td><td class="trend-down">↓ Melhor</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- SEÇÃO 5 — ANÁLISE ESTRATÉGICA     -->
+<!-- ══════════════════════════════════ -->
+<section id="s5">
+  <div class="section-header">
+    <h2>Análise Estratégica — Diagnóstico para o CTO</h2>
+  </div>
+
+  <!-- CARD A: Hipóteses -->
+  <div class="card" style="margin-bottom:24px;">
+    <h3 style="margin-bottom:6px;">Por que o Lead Time cresceu após a adoção de IA?</h3>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:0;">4 hipóteses diagnósticas identificadas — testáveis via SQL no modelo dimensional</p>
+    <div class="hypo-grid">
+      <div class="hypo-card">
+        <div class="hypo-num">Hipótese 01</div>
+        <div class="hypo-icon">📈</div>
+        <h4>PRs maiores e mais complexos</h4>
+        <p>Quando o <code>coding_time</code> diminui, engenheiros tendem a incluir mais mudanças em um único PR. Os dados mostram crescimento em <code>qtd_linhas_adicionadas</code> após jan/2024. PRs acima de 800 linhas têm <code>review_time</code> médio 3,4x maior. Solução: limite de 400 linhas por PR como política de engenharia.</p>
+      </div>
+      <div class="hypo-card">
+        <div class="hypo-num">Hipótese 02</div>
+        <div class="hypo-icon">🪣</div>
+        <h4>Saturação da capacidade de revisão</h4>
+        <p>O volume de pull requests cresceu ~60% após a adoção de IA, mas <code>qtd_revisores</code> permaneceu estável. A fila de Code Review cresce matematicamente. Diagnóstico via SQL: calcular <code>review_time</code> médio por revisor ao longo do tempo. Solução: distribuir revisão e implementar triagem automatizada (SonarQube).</p>
+      </div>
+      <div class="hypo-card">
+        <div class="hypo-num">Hipótese 03</div>
+        <div class="hypo-icon">🔥</div>
+        <h4>Aumento no CFR por qualidade insuficiente</h4>
+        <p>Código gerado por IA passa em testes unitários mas falha em integrações complexas. O CFR subiu de 14% para 22% — 8 pontos percentuais. A equipe consome tempo crescente em <code>fl_hotfix=true</code> e <code>fl_revertido=true</code>, capacidade que não aparece no Lead Time de novas features mas que a corrói silenciosamente.</p>
+      </div>
+      <div class="hypo-card">
+        <div class="hypo-num">Hipótese 04</div>
+        <div class="hypo-icon">🔎</div>
+        <h4>Erosão da confiança no código de IA</h4>
+        <p>Revisores que acumularam experiências com bugs de IA passaram a aprofundar suas revisões — resposta racional ao aumento do CFR. O <code>review_time</code> médio cresceu 89% não por ineficiência, mas por necessidade legítima de maior cautela. A solução não é pressão por velocidade, mas melhoria estrutural da qualidade do código gerado.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD B: Conexão Técnica-Negócio -->
+  <div class="card" style="margin-bottom:24px;">
+    <h3 style="margin-bottom:6px;">Deploy → Conversão de Produto</h3>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:20px;">Como conectar fato_deploys com valor de negócio para o CTO</p>
+    <p style="font-size:14px;color:var(--muted);line-height:1.8;margin-bottom:20px;">Para responder a pergunta mais estratégica do CTO — "quanto cada deploy gerou em resultado de negócio?" — propomos uma tabela de integração que conecta eventos de deploy ao impacto observado em métricas de produto dentro de uma janela de observação configurável.</p>
+    <div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em;">fato_produto_impacto</div>
+    <div class="mini-table-wrap">
+      <table class="mini-table">
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td>fk_deploy</td><td>STRING</td><td>FK → fato_deploys (sk_deploy)</td></tr>
+          <tr><td>fk_produto</td><td>INTEGER</td><td>Área de produto impactada</td></tr>
+          <tr><td>janela_observacao_dias</td><td>TINYINT</td><td>Janela para medir impacto (ex: 7 dias)</td></tr>
+          <tr><td>taxa_conversao_antes</td><td>DECIMAL</td><td>Taxa de conversão pré-deploy (%)</td></tr>
+          <tr><td>taxa_conversao_depois</td><td>DECIMAL</td><td>Taxa de conversão pós-deploy (%)</td></tr>
+          <tr><td>delta_conversao_pp</td><td>DECIMAL</td><td>Variação em pontos percentuais</td></tr>
+          <tr><td>receita_incremental_brl</td><td>DECIMAL</td><td>Receita atribuível ao deploy (R$)</td></tr>
+          <tr><td>nps_delta</td><td>DECIMAL</td><td>Variação no NPS pós-deploy</td></tr>
+          <tr><td>churn_delta_pp</td><td>DECIMAL</td><td>Variação no churn pós-deploy (pp)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="insight-card" style="margin-top:16px;">
+      Esta tabela permite ao CTO visualizar no dashboard: "O deploy #847 do Checkout gerou <strong>+2,3pp de conversão</strong> em 7 dias, equivalente a <strong>R$ 47.000 em receita incremental</strong>."
+    </div>
+  </div>
+
+  <!-- CARD C: Conclusão -->
+  <div class="conclusion-card">
+    <h3>Conclusão Executiva</h3>
+    <p>Os dados demonstram que a IA Generativa na TechFlow está operando como amplificador de volume, não de valor. O gargalo não está na escrita de código — está na capacidade de revisar, validar e entregar com qualidade.</p>
+    <p>A solução de BI proposta entrega ao CTO visibilidade cirúrgica sobre onde cada hora é perdida no ciclo de entrega: o modelo dimensional com <code>fato_deploys</code> e suas quatro dimensões transforma dados dispersos do GitHub e Jira em um único ponto de verdade analítico. O pipeline ELT com Airbyte, dbt e BigQuery garante latência baixa, rastreabilidade total e custo controlado. E o dashboard em três níveis permite ir do diagnóstico estratégico ao drill-down de um PR específico em três cliques.</p>
+    <p>A recomendação é clara: implementar esta estratégia como fundação analítica da gestão de engenharia da TechFlow — onde os dados de ontem alimentam as decisões de amanhã, e onde a IA é avaliada não por promessas, mas por evidências mensuráveis.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div><strong>TechFlow · Business Intelligence for Software Engineers · UniFECAF 2025</strong></div>
+  <div style="margin-top:6px;">Lead de Engenharia: <strong>Rodrigo</strong></div>
+  <div class="footer-stack">Stack: BigQuery · dbt Core · Airbyte · Apache Airflow · Looker Studio</div>
+</footer>
+
+<script>
+/* ── SIDEBAR TOGGLE ── */
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('overlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('show');
+}
+
+/* ── SCROLL SPY ── */
+const navLinks = document.querySelectorAll('.sidebar-nav a');
+const sections = document.querySelectorAll('section[id]');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.sidebar-nav a[data-section="${e.target.id}"]`);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(s => observer.observe(s));
+
+/* ── ACCORDION ── */
+function toggleAccordion(id) {
+  const el = document.getElementById(id);
+  const wasOpen = el.classList.contains('open');
+  document.querySelectorAll('.accordion').forEach(a => a.classList.remove('open'));
+  if (!wasOpen) el.classList.add('open');
+}
+
+/* ── TABS ── */
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+  if (tabId === 'tab1' && !window._chartsTab1Built) { buildTab1Charts(); window._chartsTab1Built = true; }
+  if (tabId === 'tab2' && !window._chartsTab2Built) { buildTab2Charts(); window._chartsTab2Built = true; }
+  if (tabId === 'tab3' && !window._chartsTab3Built) { buildTab3Charts(); window._chartsTab3Built = true; }
+}
+
+/* ── CHART DEFAULTS ── */
+Chart.defaults.color = '#94A3B8';
+Chart.defaults.borderColor = '#334155';
+Chart.defaults.font.family = 'Inter';
+
+/* ── TAB 1 CHARTS ── */
+function buildTab1Charts() {
+  const weeks = ['Jan/01','Jan/08','Jan/15','Jan/22','Jan/29','Fev/05','Fev/12','Fev/19','Fev/26','Mar/04','Mar/11','Mar/18','Mar/25'];
+
+  new Chart(document.getElementById('chartLeadTime'), {
+    type: 'line',
+    data: {
+      labels: weeks,
+      datasets: [
+        {
+          label: 'Lead Time Real (horas)',
+          data: [18,19,18,20,22,24,26,27,29,31,32,33,34],
+          borderColor: '#0EA5E9',
+          backgroundColor: 'rgba(14,165,233,0.08)',
+          tension: 0.35,
+          fill: true,
+          pointRadius: 4,
+          pointBackgroundColor: '#0EA5E9'
+        },
+        {
+          label: 'Threshold Elite DORA (24h)',
+          data: Array(13).fill(24),
+          borderColor: '#EF4444',
+          borderDash: [6,3],
+          pointRadius: 0,
+          fill: false
+        },
+        {
+          label: 'Adoção de IA (15/jan)',
+          data: [null,null,18,null,null,null,null,null,null,null,null,null,null],
+          borderColor: '#10B981',
+          borderDash: [4,4],
+          pointRadius: 8,
+          pointStyle: 'triangle',
+          pointBackgroundColor: '#10B981',
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        y: { min: 0, max: 50, title: { display: true, text: 'Horas' }, grid: { color: '#1E293B' } },
+        x: { grid: { color: '#1E293B' }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('chartDepFreq'), {
+    type: 'bar',
+    data: {
+      labels: ['Payments','Checkout','Onboarding','Platform','Data & ML'],
+      datasets: [
+        {
+          label: 'Pré-IA (jan/2024)',
+          data: [15,12,9,7,5],
+          backgroundColor: 'rgba(14,165,233,0.7)',
+          borderColor: '#0EA5E9',
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          label: 'Pós-IA (mar/2024)',
+          data: [14,9,6,4,3],
+          backgroundColor: 'rgba(245,158,11,0.7)',
+          borderColor: '#F59E0B',
+          borderWidth: 1,
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+      },
+      scales: {
+        y: { title: { display: true, text: 'Deploys / semana' }, grid: { color: '#1E293B' } },
+        x: { grid: { color: '#1E293B' } }
+      }
+    }
+  });
+}
+
+/* ── TAB 2 CHARTS ── */
+function buildTab2Charts() {
+  const noIA = [
+    {x:120,y:9},{x:180,y:11},{x:210,y:8},{x:250,y:13},{x:290,y:10},
+    {x:310,y:15},{x:340,y:12},{x:370,y:14},{x:400,y:17},{x:430,y:16},
+    {x:460,y:19},{x:480,y:20},{x:510,y:18},{x:540,y:22},{x:570,y:21}
+  ];
+  const withIA = [
+    {x:420,y:19},{x:510,y:22},{x:580,y:26},{x:620,y:28},{x:680,y:32},
+    {x:720,y:35},{x:760,y:38},{x:810,y:40},{x:860,y:42},{x:920,y:44},
+    {x:980,y:47},{x:1050,y:50},{x:1120,y:54},{x:1200,y:58},{x:1300,y:61},
+    {x:1380,y:63},{x:1450,y:65},{x:1560,y:62},{x:1700,y:64},{x:1850,y:67}
+  ];
+  new Chart(document.getElementById('chartScatter'), {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'IA = Não',
+          data: noIA,
+          backgroundColor: 'rgba(14,165,233,0.75)',
+          pointRadius: 6
+        },
+        {
+          label: 'IA = Sim',
+          data: withIA,
+          backgroundColor: 'rgba(245,158,11,0.75)',
+          pointRadius: 6
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12 } }
+      },
+      scales: {
+        x: { title: { display: true, text: 'Linhas Adicionadas (tamanho do PR)' }, min: 0, max: 2000, grid: { color: '#1E293B' } },
+        y: { title: { display: true, text: 'Tempo de Review (horas)' }, min: 0, max: 80, grid: { color: '#1E293B' } }
+      }
+    }
+  });
+}
+
+/* ── TAB 3 CHARTS ── */
+function buildTab3Charts() {
+  new Chart(document.getElementById('chartHistogram'), {
+    type: 'bar',
+    data: {
+      labels: ['0–8h','8–16h','16–24h','24–48h','48–72h','72h+'],
+      datasets: [{
+        label: 'Número de Deploys',
+        data: [12,28,19,67,43,21],
+        backgroundColor: [
+          'rgba(16,185,129,0.7)',
+          'rgba(245,158,11,0.7)',
+          'rgba(245,158,11,0.5)',
+          'rgba(239,68,68,0.7)',
+          'rgba(239,68,68,0.8)',
+          'rgba(239,68,68,0.9)'
+        ],
+        borderColor: ['#10B981','#F59E0B','#F59E0B','#EF4444','#EF4444','#EF4444'],
+        borderWidth: 1,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        annotation: {}
+      },
+      scales: {
+        y: { title: { display: true, text: 'Qtd de Deploys' }, grid: { color: '#1E293B' } },
+        x: { grid: { color: '#1E293B' } }
+      }
+    }
+  });
+}
+
+/* ── INIT: build tab1 charts on load ── */
+window.addEventListener('load', () => {
+  buildTab1Charts();
+  window._chartsTab1Built = true;
+});
+</script>
+</body>
+</html>
