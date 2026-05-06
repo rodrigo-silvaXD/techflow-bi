@@ -1184,6 +1184,22 @@ footer strong { color: var(--text); }
         <option>senior</option>
         <option>staff</option>
       </select>
+      <select id="filter-repo">
+        <option value="all">Todos os Repositórios</option>
+        <option value="checkout-api">checkout-api</option>
+        <option value="onboarding-web">onboarding-web</option>
+        <option value="platform-core">platform-core</option>
+        <option value="payments-service">payments-service</option>
+        <option value="data-pipeline">data-pipeline</option>
+      </select>
+      <select id="filter-feature">
+        <option value="all">Todos os Domínios</option>
+        <option value="checkout">Checkout</option>
+        <option value="onboarding">Onboarding</option>
+        <option value="platform">Plataforma</option>
+        <option value="payments">Pagamentos</option>
+        <option value="data">Dados &amp; ML</option>
+      </select>
     </div>
 
     <h3 style="margin-bottom:16px;">Top 10 PRs com Maior review_time — Gargalo Identificado</h3>
@@ -1588,6 +1604,65 @@ function buildTab3Charts() {
     }
   });
 }
+
+/* ── FILTER PR TABLE (Tab 2) — todos os 6 filtros em AND lógico ── */
+const domainMap = {
+  checkout:   'checkout-api',
+  onboarding: 'onboarding-web',
+  platform:   'platform-core',
+  payments:   'payments-service',
+  data:       'data-pipeline'
+};
+
+function filterPRTable() {
+  const squad   = document.getElementById('filterSquad').value;
+  const ia      = document.getElementById('filterIA').value;
+  const nivel   = document.getElementById('filterNivel').value;
+  const repo    = document.getElementById('filter-repo').value;
+  const feature = document.getElementById('filter-feature').value;
+
+  const squadMap = {
+    'Payments': 'payments-service',
+    'Checkout': 'checkout-api',
+    'Onboarding': 'onboarding-web',
+    'Platform': 'platform-core',
+    'Data & ML': 'data-pipeline'
+  };
+
+  const rows = document.querySelectorAll('#prTable tbody tr');
+  rows.forEach(row => {
+    const cells = row.querySelectorAll('td');
+    const rowRepo  = cells[1].textContent.trim();
+    const rowNivel = cells[3].textContent.trim();
+    const rowIA    = cells[6].textContent.includes('✅');
+
+    let show = true;
+
+    // Filtro Squad
+    if (squad !== 'Todas as Squads' && squadMap[squad] !== rowRepo) show = false;
+
+    // Filtro IA
+    if (ia === 'ia_assistido = true'  && !rowIA) show = false;
+    if (ia === 'ia_assistido = false' &&  rowIA) show = false;
+
+    // Filtro Nível
+    if (nivel !== 'Todos os Níveis' && rowNivel !== nivel) show = false;
+
+    // Filtro Repositório
+    if (repo !== 'all' && rowRepo !== repo) show = false;
+
+    // Filtro Feature/Domínio
+    if (feature !== 'all' && rowRepo !== domainMap[feature]) show = false;
+
+    row.style.display = show ? '' : 'none';
+  });
+}
+
+['filterSquad','filterPeriod','filterIA','filterNivel','filter-repo','filter-feature']
+  .forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', filterPRTable);
+  });
 
 /* ── INIT: build tab1 charts on load ── */
 window.addEventListener('load', () => {
